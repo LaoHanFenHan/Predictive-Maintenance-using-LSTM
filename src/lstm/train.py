@@ -209,3 +209,32 @@ def build_pdmpipeline(
         'y': y,                             # [N, C]
         'meta': meta                        # 每个样本的设备/时间映射
     }
+
+
+
+
+# 假设你的原始df包含四列：
+# df.columns = ['device_id', 'param_mark', 'param_value', 'param_time']
+# 其中 param_time 是毫秒级Unix时间戳（如 1753164785521）
+
+result = build_pdmpipeline(
+    df_long=df,
+    param_marks=[f'plcparam{i}' for i in range(1, 28)],
+    time_col='param_time',
+    unit='ms',                  # 如果是秒，改为 's'
+    tz='Asia/Shanghai',         # 业务时区（或 'UTC'）
+    impute_method='ffill',      # 缺失前向填充（同设备）
+    impute_fillna=None,         # 仍缺的值保留 NaN（你也可以设为0）
+    window_size=60,             # 窗口长度（例如过去60个采样点）
+    horizon=1,                  # 预测1步后的目标
+    stride=1,                   # 每步滑动1个点
+    target_cols=('plcparam1',), # 例子：预测 plcparam1（可多列）
+    extra_feature_cols=None
+)
+
+X = result['X']          # 形状: [样本数, 60, 特征数]
+y = result['y']          # 形状: [样本数, 目标维度]
+meta = result['meta']    # 每个样本对应的设备/时间
+print(X.shape, y.shape)
+print(meta.head())
+
