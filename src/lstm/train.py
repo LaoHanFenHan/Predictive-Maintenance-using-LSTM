@@ -26,9 +26,9 @@ def long_to_wide(df, value = 'param_score', time_col='param_time'):
     # # 可能有的列暂时不存在，reindex会自动补NaN
     # wide = wide.reindex(columns=cols)
 
-    wide = wide.reindex()
-
-    return wide
+    # 过滤掉那些只有一个参数的时间点
+    df_wide_filtered = wide.dropna(how='any', subset=[col for col in wide.columns if col not in ['device_id', 'param_time']])
+    return df_wide_filtered
 
 
 # ========= 2) 添加时间特征 =========
