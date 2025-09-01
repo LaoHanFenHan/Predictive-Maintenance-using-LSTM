@@ -4,9 +4,6 @@
 ## 总健康度计算
 #######################################################################################################
 # 1.层次分析法
-import numpy as np
-import pandas as pd
-
 # 计算权重和一致性检验
 def ahp_weights(matrix):
     # 归一化矩阵
@@ -22,7 +19,13 @@ def ahp_weights(matrix):
     CI = (max_lambda - n) / (n - 1)  # 一致性指标 CI
     RI = [0, 0, 0.58, 0.9, 1.12, 1.24, 1.32, 1.41, 1.45]  # 随着矩阵维度变化的随机一致性指标
     CR = CI / RI[n-1]
-    
+    print("工位权重：", weights)
+    print("一致性比例（工位比较矩阵）：", CR)
+
+    if CR < 0.1:
+        print("一致性检验通过")
+    else:
+        print("一致性检验未通过，请调整判断矩阵")
     return weights, CR
 
 # 示例工位比较矩阵（假设9个工位）
@@ -41,35 +44,24 @@ A_workstations = np.array([
 # 计算工位权重和一致性检验
 weights_workstations, CR_workstations = ahp_weights(A_workstations)
 
-print("工位权重：", weights_workstations)
-print("一致性比例（工位比较矩阵）：", CR_workstations)
 
-if CR_workstations < 0.1:
-    print("一致性检验通过")
-else:
-    print("一致性检验未通过，请调整判断矩阵")
 
-# 假设你有每个工位的扭矩、电流、温度的得分（9个工位，每个工位3个准则得分）
-data = np.array([
-    [0.8, 0.7, 0.6],  # 工位1的扭矩、电流、温度得分
-    [0.85, 0.75, 0.65],  # 工位2的得分
-    [0.9, 0.8, 0.7],    # 工位3的得分
-    [0.75, 0.72, 0.62],  # 工位4的得分
-    [0.78, 0.76, 0.68],  # 工位5的得分
-    [0.83, 0.74, 0.64],  # 工位6的得分
-    [0.88, 0.79, 0.72],  # 工位7的得分
-    [0.77, 0.78, 0.69],  # 工位8的得分
-    [0.82, 0.71, 0.63],  # 工位9的得分
-])
-
-# 假设每个工位的准则权重分别为 [w_torque, w_current, w_temperature]
-# 我们需要为每个工位计算得分：每个工位的健康度得分可以通过加权平均计算
 
 # 假设每个工位的准则权重（根据实际情况，可以通过AHP得到）
 weights_criteria = np.array([0.5, 0.3, 0.2])  # 扭矩0.5、电流0.3、温度0.2
+# 创建一个包含27个参数的权重数组
+param_weights = np.array([
+    [0.5] * 9,  # 扭矩对应的9个参数
+    [0.3] * 9,  # 电流对应的9个参数
+    [0.2] * 9   # 温度对应的9个参数
+]).flatten()
+# 获取所有参数列名，去掉 'device_id' 和 'param_time' 列
+param_columns = [col for col in df_wide.columns if col not in ['device_id', 'param_time']]
+# 提取所有的参数列
+data = df_wide[param_columns]
 
 # 计算每个工位的健康度
-health_scores = np.dot(data, weights_criteria)  # 用得分和准则权重计算每个工位的健康度
+health_scores = np.dot(data, param_weights)  # 用得分和准则权重计算每个工位的健康度
 
 # 合并工位权重和健康度评分
 final_scores = weights_workstations * health_scores  # 将每个工位的健康度乘以工位权重
