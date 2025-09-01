@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # ========= 1) 长表 -> 宽表 =========
-def long_to_wide(df, param_marks=None, time_col='param_time'):
+def long_to_wide(df, value = 'param_score', time_col='param_time'):
     """
     将长表(df: device_id, param_mark, param_value, param_time[ms])转成宽表：
     每行 = 某设备在某时刻的所有参数 + 时间列
@@ -15,16 +15,18 @@ def long_to_wide(df, param_marks=None, time_col='param_time'):
     wide = df.pivot_table(
         index=['device_id', time_col],
         columns='param_mark',
-        values='param_value',
+        values= value,
         aggfunc='last',    # 若同一时刻重复上报，取最后一条
     ).reset_index()
 
-    # 显式列顺序（如果你只要 plcparam1~27）
-    if param_marks is None:
-        param_marks = [f'plcparam{i}' for i in range(1, 28)]
-    cols = ['device_id', time_col] + param_marks
-    # 可能有的列暂时不存在，reindex会自动补NaN
-    wide = wide.reindex(columns=cols)
+    # # 显式列顺序（如果你只要 plcparam1~27）
+    # if param_marks is None:
+    #     param_marks = [f'plcparam{i}' for i in range(1, 28)]
+    # cols = ['device_id', time_col] + param_marks
+    # # 可能有的列暂时不存在，reindex会自动补NaN
+    # wide = wide.reindex(columns=cols)
+
+    wide = wide.reindex()
 
     return wide
 
