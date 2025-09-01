@@ -47,34 +47,24 @@ weights_workstations, CR_workstations = ahp_weights(A_workstations)
 
 
 
+# 获取所有参数列名，去掉 'device_id' 和 'param_time' 列
+param_columns = [col for col in df_wide.columns if col not in ['device_id', 'param_time']]
+# 按照参数名（param1, param2, ..., param27）排序
+param_columns_sorted = sorted(param_columns, key=lambda x: int(x.replace('plcparam', '')))
+# 按排序后的顺序重新排列 DataFrame
+data_sorted = df_wide[param_columns_sorted]
+
+
 # 假设每个工位的准则权重（根据实际情况，可以通过AHP得到）
 weights_criteria = np.array([0.5, 0.3, 0.2])  # 扭矩0.5、电流0.3、温度0.2
 # 创建一个包含27个参数的权重数组
-param_weights = np.array([
-    [0.5] * 9,  # 扭矩对应的9个参数
-    [0.3] * 9,  # 电流对应的9个参数
-    [0.2] * 9   # 温度对应的9个参数
-]).flatten()
-# 获取所有参数列名，去掉 'device_id' 和 'param_time' 列
-param_columns = [col for col in df_wide.columns if col not in ['device_id', 'param_time']]
-# 提取所有的参数列
-data = df_wide[param_columns]
+param_weights = np.array([0.5] * 9 + [0.3] * 9 + [0.2] * 9)
 
 # 计算每个工位的健康度
-health_scores = np.dot(data, param_weights)  # 用得分和准则权重计算每个工位的健康度
+health_scores = np.dot(data_sorted, param_weights)  # 用得分和准则权重计算每个工位的健康度
 
 # 合并工位权重和健康度评分
 final_scores = weights_workstations * health_scores  # 将每个工位的健康度乘以工位权重
-
-# 输出最终的健康度评分
-df_health = pd.DataFrame({
-    '工位': [f'工位{i+1}' for i in range(9)],
-    '健康度评分': health_scores,
-    '加权健康度评分': final_scores
-})
-
-print("\n每个工位的健康度评分及加权健康度评分：")
-print(df_health)
 
 # 计算整体设备健康度：对加权健康度评分进行求和
 overall_health_score = final_scores.sum()
